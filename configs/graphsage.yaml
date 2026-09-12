@@ -1,0 +1,15 @@
+model: graphsage
+processed_path: data/processed/elliptic_temporal_v1_all_original_features.pt
+output_dir: outputs
+experiment_name: elliptic_temporal_v1
+feature_mode: all_original_features
+device: auto
+training:
+  max_epochs: 60
+  patience: 12
+  learning_rate: 0.01
+  weight_decay: 0.0005
+  hidden_channels: 32
+  dropout: 0.35
+  bidirectional_edges: true
+

@@ -1,0 +1,18 @@
+# Ablation (R1): local-only Elliptic features (first 93 columns), aggregated
+# neighbourhood features removed. Isolates the contribution of message passing.
+raw_dir: elliptic_bitcoin_dataset
+processed_dir: data/processed
+output_dir: outputs
+experiment_name: elliptic_temporal_v1
+feature_mode: local_only
+local_feature_count: 93
+split_version: temporal_60_20_20_v1
+split:
+  train_fraction: 0.60
+  val_fraction: 0.20
+  test_fraction: 0.20
+scaling:
+  method: standard
+graph:
+  canonical_directed: true
+  message_passing_bidirectional: true

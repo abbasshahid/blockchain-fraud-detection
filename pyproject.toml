@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blockchain-fraud-xai"
+version = "0.1.0"
+description = "Evidence-grounded explainable blockchain fraud detection on the Elliptic Bitcoin dataset."
+requires-python = ">=3.11"
+dependencies = [
+  "numpy",
+  "pandas",
+  "scikit-learn",
+  "torch",
+  "xgboost",
+  "pyyaml",
+  "pydantic",
+  "matplotlib",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

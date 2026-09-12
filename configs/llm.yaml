@@ -1,0 +1,10 @@
+provider: google_gemini
+model: gemini-2.5-flash-lite
+temperature: 0.0
+max_output_tokens: 2000
+api_key_file: api_keys.json
+max_retries: 1
+api_max_retries: 4
+delay_between_requests_seconds: 1.0
+timeout_seconds: 60
+store: false

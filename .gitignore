@@ -1,0 +1,56 @@
+# --- Secrets (never commit) ------------------------------------------------
+/api_keys.json
+*.key
+.env
+.env.*
+
+# --- Input dataset (downloaded separately; see README) ----------------------
+/elliptic_bitcoin_dataset/
+
+# --- Generated content ------------------------------------------------------
+/data/
+/outputs/
+/paper/
+/docs/
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+pytest-cache-files-*/
+.ipynb_checkpoints/
+
+# --- Model and data binaries, wherever they land ----------------------------
+*.pt
+*.pth
+*.pkl
+*.ckpt
+
+# --- LaTeX build artefacts --------------------------------------------------
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+*.out
+*.lof
+*.lot
+
+# --- Editors, OS and scratch ------------------------------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+scratch/
+tmp/

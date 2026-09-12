@@ -1,0 +1,18 @@
+project_name: blockchain_fraud_xai
+experiment_name: elliptic_temporal_v1
+seeds: [11, 22, 33, 44, 55]
+device: auto
+num_workers: 4
+save_predictions: true
+save_embeddings: false
+deterministic: true
+
+paths:
+  raw_dir: elliptic_bitcoin_dataset
+  processed_dir: data/processed
+  output_dir: outputs
+
+logging:
+  level: INFO
+  save_environment: true
+
