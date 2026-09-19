@@ -1,4 +1,4 @@
-# Explainable Blockchain Fraud Detection with Temporal GNNs and Evidence-Grounded LLMs
+# When Graph Learning Is Under-Supplied: Explainable Blockchain Fraud Detection with Evidence-Grounded LLMs
 
 Reference implementation for the paper of the same name. The pipeline detects
 illicit transactions in the Elliptic Bitcoin transaction graph under a
@@ -14,12 +14,12 @@ the manuscript are all regenerated locally by the commands below.
 
 ## What the paper finds
 
-| Model | Illicit F1 | PR-AUC | ROC-AUC |
-|---|---|---|---|
+| Model             | Illicit F1                 | PR-AUC                     | ROC-AUC                    |
+| ----------------- | -------------------------- | -------------------------- | -------------------------- |
 | **XGBoost** | **0.6497 ± 0.0087** | **0.6630 ± 0.0020** | **0.8692 ± 0.0073** |
-| GraphSAGE | 0.2526 ± 0.0040 | 0.4289 ± 0.0405 | 0.8316 ± 0.0068 |
-| GCN | 0.2164 ± 0.0079 | 0.2090 ± 0.0155 | 0.7935 ± 0.0085 |
-| GAT | 0.1907 ± 0.0174 | 0.2203 ± 0.0512 | 0.7914 ± 0.0228 |
+| GraphSAGE         | 0.2526 ± 0.0040           | 0.4289 ± 0.0405           | 0.8316 ± 0.0068           |
+| GCN               | 0.2164 ± 0.0079           | 0.2090 ± 0.0155           | 0.7935 ± 0.0085           |
+| GAT               | 0.1907 ± 0.0174           | 0.2203 ± 0.0512           | 0.7914 ± 0.0228           |
 
 Five seeds (11, 22, 33, 44, 55), test period = time steps 40–49.
 
@@ -45,6 +45,8 @@ Three results worth highlighting:
 Requires Python 3.11+ and about 2 GB of free disk.
 
 ```bash
+git clone https://github.com/abbasshahid/blockchain-fraud-detection.git
+cd blockchain-fraud-detection
 pip install -r requirements.lock.txt
 export PYTHONPATH=src            # PowerShell: $env:PYTHONPATH="src"
 ```
@@ -85,11 +87,11 @@ python -m blockchain_fraud.cli generate-reports --method unconstrained_llm --llm
 `make reports-offline` produces deterministic template reports instead, with no
 key at all. Keys are read locally and never written into any generated file.
 
-| Provider | Environment variable | Key in `api_keys.json` |
-|---|---|---|
-| Google Gemini | `GEMINI_API_KEY` | `gemini_api_key` |
-| OpenRouter | `OPENROUTER_API_KEY` | `openRouter_api_key` |
-| OpenAI | `OPENAI_API_KEY` | `openai_api_key` |
+| Provider      | Environment variable   | Key in`api_keys.json` |
+| ------------- | ---------------------- | ----------------------- |
+| Google Gemini | `GEMINI_API_KEY`     | `gemini_api_key`      |
+| OpenRouter    | `OPENROUTER_API_KEY` | `openRouter_api_key`  |
+| OpenAI        | `OPENAI_API_KEY`     | `openai_api_key`      |
 
 Generation runs at temperature 0 and is resumable, so an interrupted run — an
 exhausted free-tier quota, for instance — continues where it stopped.
@@ -98,31 +100,31 @@ exhausted free-tier quota, for instance — continues where it stopped.
 
 ## Layout
 
-| Path | Contents |
-|---|---|
-| `src/blockchain_fraud/data/` | validation, temporal split, preprocessing |
-| `src/blockchain_fraud/models/` | XGBoost baseline, GCN / GraphSAGE / GAT, graph utilities |
-| `src/blockchain_fraud/training/` | trainer and evaluator |
-| `src/blockchain_fraud/blockchain/` | BTREP evidence profiles |
-| `src/blockchain_fraud/explain/` | prompts, LLM clients, schema, validators, faithfulness, evidence-value ablation |
-| `src/blockchain_fraud/analysis/` | significance, thresholds, calibration, error and graph diagnostics, tables, figures |
-| `configs/` | one YAML per model, dataset variant and LLM provider — **the hyperparameters** |
-| `scripts/` | environment report, ablations, scalability, artefact builds, figure checks |
+| Path                                 | Contents                                                                             |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `src/blockchain_fraud/data/`       | validation, temporal split, preprocessing                                            |
+| `src/blockchain_fraud/models/`     | XGBoost baseline, GCN / GraphSAGE / GAT, graph utilities                             |
+| `src/blockchain_fraud/training/`   | trainer and evaluator                                                                |
+| `src/blockchain_fraud/blockchain/` | BTREP evidence profiles                                                              |
+| `src/blockchain_fraud/explain/`    | prompts, LLM clients, schema, validators, faithfulness, evidence-value ablation      |
+| `src/blockchain_fraud/analysis/`   | significance, thresholds, calibration, error and graph diagnostics, tables, figures  |
+| `configs/`                         | one YAML per model, dataset variant and LLM provider —**the hyperparameters** |
+| `scripts/`                         | environment report, ablations, scalability, artefact builds, figure checks           |
 
 ### What the pipeline creates locally
 
 None of the following is tracked; each is produced by the commands above and
 every writer creates its own directory, so a fresh clone needs no placeholders:
 
-| Path | Created by | Size |
-|---|---|---|
-| `elliptic_bitcoin_dataset/` | you, before anything else | ~666 MB |
-| `data/processed/` | `make preprocess` | ~500 MB |
-| `outputs/predictions/`, `outputs/checkpoints/` | `make train-all` | ~850 MB |
-| `outputs/tables/`, `outputs/metrics/`, `outputs/figures/` | `make artifacts` | ~4 MB |
-| `outputs/explanations/` | `make evidence`, report generation | ~1 MB |
-| `paper/` | the manuscript build | ~3 MB |
-| `docs/` | project notes written during development | <1 MB |
+| Path                                                            | Created by                               | Size    |
+| --------------------------------------------------------------- | ---------------------------------------- | ------- |
+| `elliptic_bitcoin_dataset/`                                   | you, before anything else                | ~666 MB |
+| `data/processed/`                                             | `make preprocess`                      | ~500 MB |
+| `outputs/predictions/`, `outputs/checkpoints/`              | `make train-all`                       | ~850 MB |
+| `outputs/tables/`, `outputs/metrics/`, `outputs/figures/` | `make artifacts`                       | ~4 MB   |
+| `outputs/explanations/`                                       | `make evidence`, report generation     | ~1 MB   |
+| `paper/`                                                      | the manuscript build                     | ~3 MB   |
+| `docs/`                                                       | project notes written during development | <1 MB   |
 
 Budget roughly 2 GB of free disk for a full run.
 
@@ -143,15 +145,15 @@ full-batch and CPU-only; no CUDA path is exercised.
 **The hyperparameters are the files in `configs/`**, not a table in this README,
 so they cannot drift from what the code runs:
 
-| File | Role |
-|---|---|
-| `configs/xgboost.yaml` | 500 rounds, depth 6, lr 0.05, subsample 0.8, early stop 50 |
-| `configs/gcn.yaml`, `configs/graphsage.yaml` | 32 hidden, dropout 0.35, lr 0.01, wd 5e-4, 60 epochs, patience 12 |
-| `configs/gat.yaml` | 24 hidden, dropout 0.35, lr 0.005, 50 epochs, patience 10 |
-| `configs/data.yaml` | 60/20/20 split over ordered time steps |
-| `configs/data_local_only.yaml` | local-only ablation: first 93 Elliptic columns |
-| `configs/data_split_early.yaml`, `configs/data_split_late.yaml` | 50/20/30 and 70/15/15 boundaries |
-| `configs/llm.yaml`, `configs/llm_openrouter.yaml` | provider, model, temperature, retry policy |
+| File                                                                | Role                                                              |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| `configs/xgboost.yaml`                                            | 500 rounds, depth 6, lr 0.05, subsample 0.8, early stop 50        |
+| `configs/gcn.yaml`, `configs/graphsage.yaml`                    | 32 hidden, dropout 0.35, lr 0.01, wd 5e-4, 60 epochs, patience 12 |
+| `configs/gat.yaml`                                                | 24 hidden, dropout 0.35, lr 0.005, 50 epochs, patience 10         |
+| `configs/data.yaml`                                               | 60/20/20 split over ordered time steps                            |
+| `configs/data_local_only.yaml`                                    | local-only ablation: first 93 Elliptic columns                    |
+| `configs/data_split_early.yaml`, `configs/data_split_late.yaml` | 50/20/30 and 70/15/15 boundaries                                  |
+| `configs/llm.yaml`, `configs/llm_openrouter.yaml`               | provider, model, temperature, retry policy                        |
 
 Model selection maximises validation PR-AUC in every case. Seeds 11, 22, 33, 44
 and 55 are used everywhere; `blockchain_fraud.seed.set_seed` sets the Python,
@@ -211,7 +213,7 @@ settings.
 
 ```bibtex
 @inproceedings{amjad2026explainable,
-  title     = {Explainable Blockchain Fraud Detection with Temporal GNNs and Evidence-Grounded LLMs},
+  title     = {When Graph Learning Is Under-Supplied: Explainable Blockchain Fraud Detection with Evidence-Grounded LLMs},
   author    = {Amjad, Sana and Abbas, Shahid and Shah, Syed Mohsin Ali and Taudes, Alfred},
   booktitle = {TODO: venue},
   year      = {2026}
@@ -223,7 +225,4 @@ Bitcoin: Experimenting with Graph Convolutional Networks for Financial
 Forensics* (KDD Workshop on Anomaly Detection in Finance, 2019), and is subject
 to its own terms; it is not redistributed here.
 
-## License
-
-TODO: add a `LICENSE` file before publishing. Without one, the default is "all
-rights reserved", which prevents others from reusing the code.
+**MIT Licensed**

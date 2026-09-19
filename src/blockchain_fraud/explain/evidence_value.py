@@ -54,6 +54,7 @@ MOTIF_LABELS = ["fan_in_like", "fan_out_like", "chain_like", "isolated_or_local"
 OBSERVATIONAL_GROUPS = ["structural", "temporal", "risk_exposure", "motifs", "feature_salience"]
 EPS = 1e-7
 RANDOM_STATE = 11
+N_REPEATS = 20
 
 
 def _logit(p: float) -> float:
@@ -132,29 +133,53 @@ def _fit_score(x_train, y_train, x_test, y_test) -> float:
 
 def evidence_value(items: list[dict[str, Any]]) -> tuple[pd.DataFrame, dict[str, Any]]:
     frame, target, columns = build_design_matrix(items)
-    x_train, x_test, y_train, y_test = train_test_split(frame, target, test_size=0.4, random_state=RANDOM_STATE)
-    full = _fit_score(x_train, y_train, x_test, y_test)
 
-    model = HistGradientBoostingRegressor(random_state=RANDOM_STATE, max_iter=300, learning_rate=0.06)
-    model.fit(x_train, y_train)
-    perm = permutation_importance(model, x_test, y_test, n_repeats=20, random_state=RANDOM_STATE, scoring="r2")
-    perm_by_column = dict(zip(frame.columns, perm.importances_mean))
+    # Repeat the split: on 400 transactions a single hold-out cannot separate a
+    # small delta-R^2 from split noise, and the sign of the smallest groups flips
+    # between draws.
+    per_repeat: dict[str, list[float]] = {g: [] for g in OBSERVATIONAL_GROUPS}
+    alone_repeat: dict[str, list[float]] = {g: [] for g in OBSERVATIONAL_GROUPS}
+    full_scores: list[float] = []
+    perm_totals: dict[str, list[float]] = {g: [] for g in OBSERVATIONAL_GROUPS}
 
+    for repeat in range(N_REPEATS):
+        x_train, x_test, y_train, y_test = train_test_split(
+            frame, target, test_size=0.4, random_state=RANDOM_STATE + repeat
+        )
+        full = _fit_score(x_train, y_train, x_test, y_test)
+        full_scores.append(full)
+
+        model = HistGradientBoostingRegressor(random_state=RANDOM_STATE, max_iter=300, learning_rate=0.06)
+        model.fit(x_train, y_train)
+        perm = permutation_importance(model, x_test, y_test, n_repeats=5, random_state=RANDOM_STATE, scoring="r2")
+        perm_by_column = dict(zip(frame.columns, perm.importances_mean))
+
+        for group in OBSERVATIONAL_GROUPS:
+            cols = columns.get(group, [])
+            if not cols:
+                continue
+            without = [c for c in frame.columns if c not in cols]
+            per_repeat[group].append(full - _fit_score(x_train[without], y_train, x_test[without], y_test))
+            alone_repeat[group].append(_fit_score(x_train[cols], y_train, x_test[cols], y_test))
+            perm_totals[group].append(float(sum(perm_by_column.get(c, 0.0) for c in cols)))
+
+    full = float(np.mean(full_scores))
     rows: list[dict[str, Any]] = []
     for group in OBSERVATIONAL_GROUPS:
-        cols = columns.get(group, [])
-        if not cols:
+        deltas = per_repeat.get(group) or []
+        if not deltas:
             continue
-        without = [c for c in frame.columns if c not in cols]
-        only = cols
+        arr = np.asarray(deltas, dtype=float)
         rows.append(
             {
                 "group": group,
-                "fields": len(cols),
+                "fields": len(columns.get(group, [])),
                 "r2_full": full,
-                "r2_without_group": _fit_score(x_train[without], y_train, x_test[without], y_test),
-                "r2_group_alone": _fit_score(x_train[only], y_train, x_test[only], y_test),
-                "permutation_importance": float(sum(perm_by_column.get(c, 0.0) for c in cols)),
+                "r2_without_group": full - float(arr.mean()),
+                "r2_group_alone": float(np.mean(alone_repeat[group])),
+                "permutation_importance": float(np.mean(perm_totals[group])),
+                "delta_r2_sd": float(arr.std(ddof=1)),
+                "delta_r2_positive_share": float((arr > 0).mean()),
             }
         )
     table = pd.DataFrame(rows)
@@ -163,8 +188,8 @@ def evidence_value(items: list[dict[str, Any]]) -> tuple[pd.DataFrame, dict[str,
         table = table.sort_values("delta_r2_when_removed", ascending=False).reset_index(drop=True)
     summary = {
         "profiled_transactions": len(items),
-        "train_size": int(len(y_train)),
-        "test_size": int(len(y_test)),
+        "repeats": N_REPEATS,
+        "test_fraction": 0.4,
         "target": "illicit logit of the trained detector",
         "r2_full_model": round(full, 4),
         "excluded_from_pool": ["prediction", "counterfactual", "limitations"],
@@ -214,6 +239,8 @@ def build_evidence_value_artifacts(
             row["group"]: {
                 "fields": int(row["fields"]),
                 "delta_r2_when_removed": round(float(row["delta_r2_when_removed"]), 4),
+                "delta_r2_sd": round(float(row["delta_r2_sd"]), 4),
+                "delta_r2_positive_share": round(float(row["delta_r2_positive_share"]), 3),
                 "r2_group_alone": round(float(row["r2_group_alone"]), 4),
                 "permutation_importance": round(float(row["permutation_importance"]), 4),
             }

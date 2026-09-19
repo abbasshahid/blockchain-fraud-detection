@@ -179,55 +179,40 @@ def build_reliability_panel(output_dir: Path) -> Path | None:
 # --------------------------------------------------------------------------
 # Explanation quality
 # --------------------------------------------------------------------------
-# The configurations reported in the explanation table, in the same order.
-COVERAGE_ROWS = [
-    ("grounded_llm", "openrouter", "v1", "Grounded\nBTREP v1", "grounded"),
-    ("unconstrained_llm", "openrouter", "v1", "Unconstr.\nBTREP v1", "unconstrained"),
-    ("grounded_llm", "gemini", "btrep_v2", "Grounded\nBTREP v2", "grounded"),
-]
-
-
 def build_coverage_panel(output_dir: Path) -> Path | None:
-    summary_path = output_dir / "metrics" / "explanation_summary.json"
+    """Coverage under the controlled ablation: same package, instruction varied.
+
+    Bars are paired means over the same transactions, so the comparison shows
+    what the instruction changes rather than what each arm was shown.
+    """
+    summary_path = output_dir / "metrics" / "grounding_ablation_summary.json"
     if not summary_path.exists():
         return None
-    methods = read_json(summary_path).get("methods", [])
-    index = {(m["method"], m["provider"], m["evidence_version"]): m for m in methods}
-
-    labels: list[str] = []
-    values: list[float] = []
-    kinds: list[str] = []
-    for method, provider, version, label, kind in COVERAGE_ROWS:
-        row = index.get((method, provider, version))
-        if row is None or row.get("evidence_coverage") is None:
-            continue
-        labels.append(label)
-        values.append(float(row["evidence_coverage"]))
-        kinds.append(kind)
-    if not labels:
-        return None
+    summary = read_json(summary_path)
+    labels = ["Grounded\ninstruction", "Unconstrained\ninstruction"]
+    values = [float(summary["mean_coverage_grounded"]), float(summary["mean_coverage_unconstrained"])]
+    colors = [MODEL_COLORS["graphsage"], MODEL_COLORS["gat"]]
+    n_pairs = int(summary["n_pairs"])
 
     apply_inline_style()
     fig, ax = _panel()
-    palette = {"grounded": MODEL_COLORS["graphsage"], "unconstrained": MODEL_COLORS["gat"]}
     positions = np.arange(len(labels))
-    for pos, value, kind in zip(positions, values, kinds):
-        ax.bar(pos, value, width=0.62, color=palette[kind], zorder=3)
+    for pos, value, color in zip(positions, values, colors):
+        ax.bar(pos, value, width=0.55, color=color, zorder=3)
         ax.annotate(
             f"{value:.3f}", xy=(pos, value), xytext=(0, 2.5), textcoords="offset points",
             ha="center", fontsize=5.8, color="0.15", zorder=4,
         )
-    handles = [
-        plt.Rectangle((0, 0), 1, 1, color=palette["grounded"]),
-        plt.Rectangle((0, 0), 1, 1, color=palette["unconstrained"]),
-    ]
-    ax.legend(handles, ["evidence-grounded", "unconstrained"], loc="upper right", **LEGEND_KW)
+    ax.annotate(
+        f"$n={n_pairs}$ paired; n.s.",
+        xy=(0.5, 0.93), xycoords="axes fraction", ha="center", fontsize=5.8, color="0.3", zorder=4,
+    )
     ax.set_xticks(positions)
     ax.set_xticklabels(labels, fontsize=5.9)
     ax.set_ylabel("Evidence coverage")
     ax.set_ylim(0, 1.0)
     ax.set_yticks([0.0, 0.25, 0.5, 0.75, 1.0])
-    ax.set_xlim(-0.62, len(labels) - 0.38)
+    ax.set_xlim(-0.6, len(labels) - 0.4)
     ax.grid(axis="x", visible=False)
     save_figure(fig, output_dir / "figures", "fig10a_evidence_coverage", tight=False)
     return output_dir / "figures" / "fig10a_evidence_coverage.pdf"
